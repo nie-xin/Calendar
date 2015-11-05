@@ -1,0 +1,35 @@
+table {
+  border-collapse: collapse;
+}
+
+tr {
+  display: block;
+  float: left;
+}
+
+th, td {
+  display: block;
+  border: 1px solid black;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+td {
+  cursor: pointer;
+}
+
+.hide-text {
+  opacity: 0;
+}
+
+.available {
+  background-color: lightgray;
+}
+
+.booked {
+  background-color: green;
+}

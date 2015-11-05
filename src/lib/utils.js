@@ -28,7 +28,21 @@ module.exports = {
       lastDate.subtract(59, 'm');
     }
 
-    range.push(lastDate.format(format));
+    if (unit === 'weeks') {
+      range.push(currDate.format(format));
+    } else {
+      range.push(lastDate.format(format));
+    }
+
     return range;
+  },
+
+  splitDate: function(date, separator) {
+    separator = separator || ' ';
+    var splitted = date.split(separator);
+    return {
+      pre: splitted[0],
+      suf: splitted[1],
+    };
   },
 };

@@ -2,32 +2,42 @@ var _ = require('underscore');
 var utils = require('./lib/utils');
 var config = require('./lib/config');
 
-
 var CalendarModel = require('./model/calendar');
 var ServiceModel = require('./model/service');
-// var TableView = require('./view/table');
+
+var TableView = require('./view/table');
+
 // var SwitchView = require('./view/swith');
 
-var calendarModel = new CalendarModel();
-var serviceModel = new ServiceModel();
 
-Promise.all([serviceModel.fetch(), calendarModel.fetch()]).then(function() {
-  var duration = serviceModel.getDurationInHour();
-  var from = calendarModel.get('from_date');
-  var to = calendarModel.get('to_date');
+document.addEventListener('DOMContentLoaded', init);
 
-  var startOfWeek = utils.getStartOf(from);
-  var endOfWeek = utils.getEndOf(to);
-  // console.log(startOfWeek + ' - ' + endOfWeek);
-  // var weekRange = utils.getRangeOf(startOfWeek, endOfWeek, )
+function init() {
+  var calendarModel = new CalendarModel();
+  var serviceModel = new ServiceModel();
 
-  var groupedTimeSlots = calendarModel.groupTimeSlots();
-  var tableList = _.map(groupedTimeSlots, function(availableByWeek, index) {
-    // return new TableView({
-    //   availableTime: availableByWeek,
-    // });
+  Promise.all([serviceModel.fetch(), calendarModel.fetch()]).then(function() {
+    var duration = serviceModel.getDurationInHour();
+    var groupedTimeSlots = calendarModel.groupTimeSlots();
+
+    var tableViewList = _.chain(groupedTimeSlots)
+      .map(function(availableByWeek, weekIndex) {
+        return new TableView({
+          weekIndex: weekIndex,
+          availableTime: availableByWeek,
+          duration: duration,
+        });
+      })
+      .sortBy(function(view) {
+        return view.weekIndex;
+      })
+      .value();
+
+    // test table rendering of first week
+    console.log(tableViewList[0]);
+    tableViewList[0].render();
+
+    // var swithView = new SwitchView(tableViewList);
+    // swithView.render();
   });
-
-  // var swithView = new SwitchView(tableList);
-  // swithView.render();
-});
+}

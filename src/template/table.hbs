@@ -1,0 +1,20 @@
+<table class="table">
+  <tbody>
+    {{#each this}}
+      <tr>
+      {{#each this}}
+        {{#if @first}}
+        <th>
+          <span class="{{#unless this.showText}}hide-text{{/unless}}">{{this.time}}</span>
+        </th>
+        {{else}}
+        <td class="{{#if this.available}}available{{/if}}" data-time="{{this.time}}">
+          <span class="{{#unless this.showText}}hide-text{{/unless}}">{{this.time}}</span>
+        </td>
+        {{/if}}
+      {{/each}}
+      </tr>
+    {{/each}}
+  </tbody>
+</table>
+<h4 class="validated">Service booked: </h4>
