@@ -1,5 +1,54 @@
+#content {
+  margin: auto;
+  width: 80%;
+  padding: 3em;
+}
+
+.nav {
+  height: 4em;
+  margin: auto;
+  width: 60%;
+}
+
+.nav .nav-period {
+  padding: 0 1.5em;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 1.3em;
+  padding-left: 4em;
+}
+
+button.next {
+  float: right;
+}
+
+.nav button {
+  height: 2.5em;
+  width: 4em;
+  font-size: 1em;
+  font-weight: bold;
+  border-radius: .3em;
+  border:none;
+  color: white;
+  background-color: green;
+}
+
+.nav button:disabled {
+  color: gray;
+  background-color: darkgray;
+}
+
+.validated {
+  margin: auto;
+  width: 50%;
+  padding-top: .5em;
+  font-family: Times, "Times New Roman", Georgia, serif;
+  font-size: 1.3em;
+}
+
 table {
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 tr {
@@ -9,6 +58,8 @@ tr {
 
 th, td {
   display: block;
+  min-width: 170px;
+  max-width: 170px;
   border: 1px solid black;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
