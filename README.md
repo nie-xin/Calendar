@@ -8,11 +8,11 @@ npm install
 
 ## Build
 ```
-node_modules/.bin/webpack
+npm run build
 ```
 
 ## Run
 
 ```
-node_modules/.bin/webpack-dev-server
+npm run server
 ```
