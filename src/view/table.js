@@ -5,10 +5,16 @@ var $ = require('jquery');
 var utils = require('../lib/utils');
 var config = require('../lib/config');
 var template = require('../template/table.hbs');
+var store = require('../model/store');
 
 module.exports = Backbone.View.extend({
   el: '.table',
   template: template,
+
+  events: {
+    'mousedown': 'toggleMouseDown',
+    'mouseup': 'toggleMouseDown',
+  },
 
   initialize: function(options) {
     this.weekIndex = options.weekIndex;
@@ -16,6 +22,31 @@ module.exports = Backbone.View.extend({
     this.period = this.getTimeByIndex(this.weekIndex);
     var timeTable = this.getWeeklyTimeTable(this.period.start, this.period.end, this.availableTime);
     this.model = timeTable;
+  },
+
+  toggleMouseDown: function(e) {
+    if (e.type === 'mousedown') {
+      store.setMouseDown(true);
+      store.resetBooked();
+    } else {
+      store.setMouseDown(false);
+      var validation = store.validateBooked();
+      this.updateMessage(validation);
+    }
+  },
+
+  updateMessage: function(validation) {
+    if (!validation) {
+      $('.validated').text('Service booked: ');
+      return false;
+    }
+
+    var from = utils.splitDate(_.first(validation));
+    var to = moment(_.last(validation)).add(1, 'hour').format(config.formatHour);
+    to = utils.splitDate(to);
+
+    var msg = from.pre + ', ' + from.suf + ' - ' + to.suf;
+    $('.validated').text('Service booked: ' + msg);
   },
 
   getTimeByIndex: function(index) {
@@ -99,34 +130,67 @@ module.exports = Backbone.View.extend({
   initEvents: function() {
     // Avoid mass of jquery each context binding
     _.each(this.el.querySelectorAll('.available'), function(slot) {
-      slot.addEventListener('mouseover', this.bookTimeSlots);
+      slot.addEventListener('mouseover', this.bookTimeSlots.bind(this));
     }, this);
+  },
+
+  markBooked: function(node) {
+    store.addBooked(node);
+    $(node).addClass('booked');
   },
 
   bookTimeSlots: function(e) {
     var node = e.currentTarget;
-    console.log(node);
-    //TODO: use pubsub to communicate with SwitchView
-    // if (!isMouseDown || $(node).hasClass('booked')) {
-    //   return false;
-    // }
-    //
-    // if (_.isEmpty(booked)) {
-    //   markBooked(node)
-    // } else {
-    //   var keys = _.keys(booked)
-    //   var bookedDay = getDayAndHour(keys[0]).day
-    //   var selectedDay = getDayAndHour(node.dataset.time).day
-    //   if (selectedDay === bookedDay && !_.contains(keys, node.dataset.time) && keys.length < durationInHour) {
-    //     markBooked(node)
-    //   }
-    // }
+
+    if (!store.isMouseDown() || $(node).hasClass('booked')) {
+      return false;
+    }
+
+    this.validateSelection(node);
   },
 
-  dispose: function(){
-    this.remove();
-    this.unbind();
-    //TODO: unbind all events
-    // this.model.unbind("change", this.modelChanged);
+  /**
+   * Validation rules:
+   * - selections are in same day
+   * - selctions are consecutive hours
+   * - no duplicates
+   * - duration equals to service duration (4h in this case)
+   */
+  validateSelection: function(node) {
+    var booked = store.getBooked();
+
+    if (_.isEmpty(booked)) {
+      this.markBooked(node);
+    } else {
+      var bookedTime = _.keys(booked);
+      var bookedDay = utils.splitDate(bookedTime[0]).pre;
+      var selectedTime = utils.splitDate(node.dataset.time);
+      var selectedDay = selectedTime.pre;
+
+      if (selectedDay === bookedDay &&
+          !_.contains(bookedTime, node.dataset.time) &&
+          bookedTime.length < store.duration &&
+          this.isConsecutiveHour(node, booked)) {
+        this.markBooked(node);
+      }
+    }
+  },
+
+  isConsecutiveHour: function(selected, booked) {
+    var bookedTime = _.keys(booked);
+    var bookedHours = bookedTime.map(function(time) {
+      return Number(utils.splitDate(time).suf.split(':')[0]);
+    });
+    var minHour = _.min(bookedHours);
+    var maxHour = _.max(bookedHours);
+
+    var selectedTime = utils.splitDate(selected.dataset.time);
+    var selectedHour = Number(selectedTime.suf.split(':')[0]);
+
+    if (selectedHour === minHour -1 || selectedHour === maxHour + 1) {
+      return true;
+    } else {
+      return false;
+    }
   },
 });
