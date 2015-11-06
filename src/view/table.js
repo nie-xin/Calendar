@@ -7,16 +7,14 @@ var config = require('../lib/config');
 var template = require('../template/table.hbs');
 
 module.exports = Backbone.View.extend({
-  el: '#content',
+  el: '.table',
   template: template,
 
   initialize: function(options) {
     this.weekIndex = options.weekIndex;
     this.availableTime = options.availableTime;
-    this.duration = options.duration;
-
-    var time = this.getTimeByIndex(this.weekIndex);
-    var timeTable = this.getWeeklyTimeTable(time.start, time.end, this.availableTime);
+    this.period = this.getTimeByIndex(this.weekIndex);
+    var timeTable = this.getWeeklyTimeTable(this.period.start, this.period.end, this.availableTime);
     this.model = timeTable;
   },
 
@@ -82,10 +80,13 @@ module.exports = Backbone.View.extend({
     return slots;
   },
 
+  // TODO: DRY
   getTemplateData: function(data) {
+    data.cid = this.weekIndex;
     return template(data);
   },
 
+  // TODO: DRY
   render: function() {
     var model = this.model || {};
     var templateData = this.getTemplateData(model);
@@ -122,4 +123,10 @@ module.exports = Backbone.View.extend({
     // }
   },
 
+  dispose: function(){
+    this.remove();
+    this.unbind();
+    //TODO: unbind all events
+    // this.model.unbind("change", this.modelChanged);
+  },
 });

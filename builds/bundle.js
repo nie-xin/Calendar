@@ -47,13 +47,12 @@
 	var _ = __webpack_require__(1);
 	var utils = __webpack_require__(2);
 	var config = __webpack_require__(91);
+	var store = __webpack_require__(117);
 	
 	var CalendarModel = __webpack_require__(92);
 	var ServiceModel = __webpack_require__(95);
-	
 	var TableView = __webpack_require__(96);
-	
-	// var SwitchView = require('./view/swith');
+	var SwitchView = __webpack_require__(118);
 	
 	
 	document.addEventListener('DOMContentLoaded', init);
@@ -63,34 +62,17 @@
 	  var serviceModel = new ServiceModel();
 	
 	  Promise.all([serviceModel.fetch(), calendarModel.fetch()]).then(function() {
-	    // var from = calendarModel.get('from_date');
-	    // var to = calendarModel.get('to_date');
-	
-	    // var startOfWeek = utils.getStartOf(from);
-	    // var endOfWeek = utils.getEndOf(to);
-	    // var weekRange = utils.getRangeOf(startOfWeek, endOfWeek, 'weeks', config.formatWeek);
-	    // console.log(weekRange);
-	
 	    var duration = serviceModel.getDurationInHour();
 	    var groupedTimeSlots = calendarModel.groupTimeSlots();
-	    var tableViewList = _.chain(groupedTimeSlots)
-	      .map(function(availableByWeek, weekIndex) {
-	        return new TableView({
-	          weekIndex: weekIndex,
-	          availableTime: availableByWeek,
-	          duration: duration,
-	        });
-	      })
-	      .sortBy(function(view) {
-	        return view.weekIndex;
-	      })
-	      .value();
 	
+	    store.init({duration: duration});
+	    // console.log(store.isMouseDown());
 	    // test table rendering of first week
-	    console.log(tableViewList[0]);
-	    tableViewList[0].render();
+	    // console.log(tableViewList[0]);
+	    // tableViewList[0].render();
 	
-	    // var swithView = new SwitchView(tableViewList);
+	    var swithView = new SwitchView({timeSlots: groupedTimeSlots});
+	    // console.log(swithView)
 	    // swithView.render();
 	  });
 	}
@@ -24358,16 +24340,14 @@
 	var template = __webpack_require__(97);
 	
 	module.exports = Backbone.View.extend({
-	  el: '#content',
+	  el: '.table',
 	  template: template,
 	
 	  initialize: function(options) {
 	    this.weekIndex = options.weekIndex;
 	    this.availableTime = options.availableTime;
-	    this.duration = options.duration;
-	
-	    var time = this.getTimeByIndex(this.weekIndex);
-	    var timeTable = this.getWeeklyTimeTable(time.start, time.end, this.availableTime);
+	    this.period = this.getTimeByIndex(this.weekIndex);
+	    var timeTable = this.getWeeklyTimeTable(this.period.start, this.period.end, this.availableTime);
 	    this.model = timeTable;
 	  },
 	
@@ -24433,10 +24413,13 @@
 	    return slots;
 	  },
 	
+	  // TODO: DRY
 	  getTemplateData: function(data) {
+	    data.cid = this.weekIndex;
 	    return template(data);
 	  },
 	
+	  // TODO: DRY
 	  render: function() {
 	    var model = this.model || {};
 	    var templateData = this.getTemplateData(model);
@@ -24473,6 +24456,12 @@
 	    // }
 	  },
 	
+	  dispose: function(){
+	    this.remove();
+	    this.unbind();
+	    //TODO: unbind all events
+	    // this.model.unbind("change", this.modelChanged);
+	  },
 	});
 
 
@@ -24518,7 +24507,9 @@
 	},"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
 	    var stack1;
 	
-	  return "<table class=\"table\">\n  <tbody>\n"
+	  return "<table class=\"table\" data-cid=\""
+	    + container.escapeExpression(container.lambda((depth0 != null ? depth0.cid : depth0), depth0))
+	    + "\">\n  <tbody>\n"
 	    + ((stack1 = helpers.each.call(depth0 != null ? depth0 : {},depth0,{"name":"each","hash":{},"fn":container.program(1, data, 0),"inverse":container.noop,"data":data})) != null ? stack1 : "")
 	    + "  </tbody>\n</table>\n<h4 class=\"validated\">Service booked: </h4>\n";
 	},"useData":true});
@@ -25697,6 +25688,179 @@
 	//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImxpYi9oYW5kbGViYXJzL25vLWNvbmZsaWN0LmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7O3FCQUNlLFVBQVMsVUFBVSxFQUFFOztBQUVsQyxNQUFJLElBQUksR0FBRyxPQUFPLE1BQU0sS0FBSyxXQUFXLEdBQUcsTUFBTSxHQUFHLE1BQU07TUFDdEQsV0FBVyxHQUFHLElBQUksQ0FBQyxVQUFVLENBQUM7O0FBRWxDLFlBQVUsQ0FBQyxVQUFVLEdBQUcsWUFBVztBQUNqQyxRQUFJLElBQUksQ0FBQyxVQUFVLEtBQUssVUFBVSxFQUFFO0FBQ2xDLFVBQUksQ0FBQyxVQUFVLEdBQUcsV0FBVyxDQUFDO0tBQy9CO0dBQ0YsQ0FBQztDQUNIIiwiZmlsZSI6ImxpYi9oYW5kbGViYXJzL25vLWNvbmZsaWN0LmpzIiwic291cmNlc0NvbnRlbnQiOlsiLyogZ2xvYmFsIHdpbmRvdyAqL1xuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24oSGFuZGxlYmFycykge1xuICAvKiBpc3RhbmJ1bCBpZ25vcmUgbmV4dCAqL1xuICBsZXQgcm9vdCA9IHR5cGVvZiBnbG9iYWwgIT09ICd1bmRlZmluZWQnID8gZ2xvYmFsIDogd2luZG93LFxuICAgICAgJEhhbmRsZWJhcnMgPSByb290LkhhbmRsZWJhcnM7XG4gIC8qIGlzdGFuYnVsIGlnbm9yZSBuZXh0ICovXG4gIEhhbmRsZWJhcnMubm9Db25mbGljdCA9IGZ1bmN0aW9uKCkge1xuICAgIGlmIChyb290LkhhbmRsZWJhcnMgPT09IEhhbmRsZWJhcnMpIHtcbiAgICAgIHJvb3QuSGFuZGxlYmFycyA9ICRIYW5kbGViYXJzO1xuICAgIH1cbiAgfTtcbn1cbiJdfQ==
 	
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 117 */
+/***/ function(module, exports, __webpack_require__) {
+
+	//Using store pattern to manage shared states
+	var $ = __webpack_require__(94);
+	var _ = __webpack_require__(1);
+	var utils = __webpack_require__(2);
+	var config = __webpack_require__(91);
+	
+	var isMouseDown;
+	var booked;
+	module.exports = {
+	  init: function(options) {
+	    if (!options || !options.duration) {
+	      throw new Error('Store expects service duration as options');
+	    }
+	
+	    this.duration = options.duration;
+	    isMouseDown = false;
+	    booked = {};
+	  },
+	
+	  toggleMouseDown: function(force) {
+	    if (force) {
+	      isMouseDown = force;
+	    } else {
+	      isMouseDown = !isMouseDown;
+	    }
+	  },
+	
+	  isMouseDown: function() {
+	    return isMouseDown;
+	  },
+	
+	  getBooked: function() {
+	    return _.clone(booked);
+	  },
+	
+	  resetBooked: function() {
+	    if (!_.isEmpty(booked)) {
+	      _.each(booked, function(node) {
+	        $(node).removeClass('booked');
+	      });
+	
+	      booked = {};
+	    }
+	  },
+	
+	  validateBooked: function() {
+	    if (_.keys(booked).length < this.duration) {
+	      this.resetBooked();
+	
+	      //TODO: trigger event to change text
+	      // $('.validated').text('Service booked: ');
+	      this.trigger('booked:resetted');
+	    } else {
+	      var sorted = _.keys(booked).sort();
+	
+	      var from = _.first(sorted);
+	      var fromSplitted = utils.splitDate(from);
+	
+	      var to = moment(_.last(sorted)).add(1, 'hour').format(config.formatHour);
+	      var toSplitted = utils.splitDate(to);
+	
+	      var msg = fromTime.day + ', ' + fromTime.hour + ' - ' + toTime.hour;
+	      this.trigger('booked:validated', msg);
+	
+	      //TODO: trigger event
+	      // $('.validated').text('Service booked: ' + fromTime.day + ', ' + fromTime.hour + ' - ' + toTime.hour)
+	    }
+	  },
+	};
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Backbone = __webpack_require__(93);
+	var _ = __webpack_require__(1);
+	var moment = __webpack_require__(3);
+	var config = __webpack_require__(91);
+	var template = __webpack_require__(119);
+	var TableView = __webpack_require__(96);
+	
+	module.exports = Backbone.View.extend({
+	  el: '#content',
+	  template: template,
+	
+	  events: {
+	    'click button': 'switchTable',
+	  },
+	
+	  initialize: function(options) {
+	    if (!options || !options.timeSlots) {
+	      throw new Error('Switch view expects time slots as options');
+	    }
+	
+	    this.timeSlots = options.timeSlots;
+	    this.currOrder = 0;
+	    this.currTab = null;
+	
+	    this.render();
+	    this.renderTable(this.currOrder);
+	  },
+	
+	
+	  switchTable: function(e) {
+	    var direction = e.target.className;
+	    if (direction === 'last' && this.currOrder > 0) {
+	      this.renderTable(this.currOrder - 1);
+	    } else if (direction === 'next' && this.currOrder < this.tableViewList.length - 1) {
+	      this.renderTable(this.currOrder + 1);
+	    }
+	  },
+	
+	  // TODO: DRY
+	  render: function() {
+	    this.$el.html(template());
+	
+	    this.tableViewList = _.chain(this.timeSlots)
+	      .map(function(availableByWeek, weekIndex) {
+	        return new TableView({
+	          weekIndex: weekIndex,
+	          availableTime: availableByWeek,
+	        });
+	      })
+	      .sortBy(function(view) {
+	        return view.weekIndex;
+	      })
+	      .value();
+	
+	    return this;
+	  },
+	
+	  renderTable: function(order) {
+	    this.currTab = this.tableViewList[order];
+	    this.currOrder = order;
+	    this.currTab.render();
+	
+	    var start = this.currTab.period.start;
+	    var end = this.currTab.period.end;
+	    var headerMsg = moment(start).format(config.formatHeader) + ' - ' +
+	      moment(end).format(config.formatHeader);
+	    this.$('.nav-period').text(headerMsg);
+	
+	    var lastBtn = this.$('.last');
+	    var nextBtn = this.$('.next');
+	    if (this.currOrder === 0) {
+	      lastBtn.prop('disabled', true);
+	    } else {
+	      lastBtn.prop('disabled', false);
+	    }
+	
+	    if (this.currOrder === this.tableViewList.length -1) {
+	      nextBtn.prop('disabled', true);
+	    } else {
+	      nextBtn.prop('disabled', false);
+	    }
+	  },
+	
+	});
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Handlebars = __webpack_require__(98);
+	module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+	    return "<div class=\"nav\">\n  <button type=\"button\" class=\"last\">Last</button>\n  <label class=\"nav-period\"></label>\n  <button type=\"button\" class=\"next\">Next</button>\n</div>\n\n<div class=\"table\"></div>";
+	},"useData":true});
 
 /***/ }
 /******/ ]);

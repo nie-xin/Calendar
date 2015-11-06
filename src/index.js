@@ -1,13 +1,12 @@
 var _ = require('underscore');
 var utils = require('./lib/utils');
 var config = require('./lib/config');
+var store = require('./model/store');
 
 var CalendarModel = require('./model/calendar');
 var ServiceModel = require('./model/service');
-
 var TableView = require('./view/table');
-
-// var SwitchView = require('./view/swith');
+var SwitchView = require('./view/switch');
 
 
 document.addEventListener('DOMContentLoaded', init);
@@ -20,24 +19,9 @@ function init() {
     var duration = serviceModel.getDurationInHour();
     var groupedTimeSlots = calendarModel.groupTimeSlots();
 
-    var tableViewList = _.chain(groupedTimeSlots)
-      .map(function(availableByWeek, weekIndex) {
-        return new TableView({
-          weekIndex: weekIndex,
-          availableTime: availableByWeek,
-          duration: duration,
-        });
-      })
-      .sortBy(function(view) {
-        return view.weekIndex;
-      })
-      .value();
+    store.init({duration: duration});
 
-    // test table rendering of first week
-    console.log(tableViewList[0]);
-    tableViewList[0].render();
-
-    // var swithView = new SwitchView(tableViewList);
-    // swithView.render();
+    //SwitchView is auto-render
+    var switchView = new SwitchView({timeSlots: groupedTimeSlots});
   });
 }

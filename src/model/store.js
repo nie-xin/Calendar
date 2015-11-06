@@ -1,26 +1,36 @@
 //Using store pattern to manage shared states
-var $ = require(jquery);
+var $ = require('jquery');
+var _ = require('underscore');
 var utils = require('../lib/utils');
 var config = require('../lib/config');
 
-var isMouseDown = false;
-var booked = {};
+var isMouseDown;
+var booked;
 module.exports = {
-  this.on('mousedown', this.toggleMouseDown);
-  this.on('mouseup', this.toggleMouseDown);
+  init: function(options) {
+    if (!options || !options.duration) {
+      throw new Error('Store expects service duration as options');
+    }
 
-  toggleMouseDown: function(e) {
-    if (e.type === 'mousedown') {
-      isMouseDown = true
-      this.resetBooked()
+    this.duration = options.duration;
+    isMouseDown = false;
+    booked = {};
+  },
+
+  toggleMouseDown: function(force) {
+    if (force) {
+      isMouseDown = force;
     } else {
-      isMouseDown = false
-      this.validateBooked()
+      isMouseDown = !isMouseDown;
     }
   },
 
+  isMouseDown: function() {
+    return isMouseDown;
+  },
+
   getBooked: function() {
-    return booked;
+    return _.clone(booked);
   },
 
   resetBooked: function() {
@@ -34,11 +44,12 @@ module.exports = {
   },
 
   validateBooked: function() {
-    if (_.keys(booked).length < durationInHour) {
+    if (_.keys(booked).length < this.duration) {
       this.resetBooked();
 
       //TODO: trigger event to change text
       // $('.validated').text('Service booked: ');
+      this.trigger('booked:resetted');
     } else {
       var sorted = _.keys(booked).sort();
 
@@ -47,6 +58,9 @@ module.exports = {
 
       var to = moment(_.last(sorted)).add(1, 'hour').format(config.formatHour);
       var toSplitted = utils.splitDate(to);
+
+      var msg = fromTime.day + ', ' + fromTime.hour + ' - ' + toTime.hour;
+      this.trigger('booked:validated', msg);
 
       //TODO: trigger event
       // $('.validated').text('Service booked: ' + fromTime.day + ', ' + fromTime.hour + ' - ' + toTime.hour)
